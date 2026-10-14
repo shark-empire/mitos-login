@@ -1,0 +1,1 @@
+Not used by the greeter itself. User avatars are looked up under state_dir/avatars/ as raw .rgba files (see src/users/avatar.rs), not here -- this directory is reserved for a future packaged-icon-set need.

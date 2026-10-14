@@ -1,0 +1,1 @@
+Not used. Text is drawn with a custom vector stroke font compiled into the binary (src/greeter/font_data.rs) specifically so no font file is a runtime dependency. This directory is reserved in case a future TTF fallback path is added.

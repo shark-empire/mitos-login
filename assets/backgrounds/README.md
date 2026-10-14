@@ -1,0 +1,1 @@
+Optional. Drop a background image here and point greeter.toml's background_path at it. The default animated "Liquid Glass" backdrop (src/greeter/renderer.rs::backdrop_generate) needs no image file at all -- this directory can stay empty.
