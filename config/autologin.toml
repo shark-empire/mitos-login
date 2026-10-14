@@ -1,0 +1,11 @@
+# Automatic sign-in, skipping the greeter entirely. Disabled by default, and
+# root can never be the autologin user (enforced regardless of what is
+# written here).
+#
+# This is a real reduction in security for the named account -- anyone who
+# can power on the machine gets that account's session with no credential at
+# all. Only enable it where the physical machine itself is the security
+# boundary (a kiosk, a single-user home media box).
+
+# user = ""
+# delay_secs = 0

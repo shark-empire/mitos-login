@@ -1,0 +1,29 @@
+# Authentication policy. Changes here take effect on the next daemon start
+# (or `mitos-loginctl reload`).
+
+[policy]
+# Failed attempts allowed before exponential backoff kicks in.
+free_attempts = 3
+
+# Backoff after the free attempts run out: base * 2^(n - free), capped at max.
+lockout_base_secs = 5
+lockout_max_secs = 900
+
+# A single sign-in attempt (typing + PAM) may not run longer than this.
+auth_timeout_secs = 60
+
+# The greeter returns to its idle state after this much inactivity on the
+# login form itself.
+greeter_idle_timeout_secs = 120
+
+# Defense in depth: a typed secret/username longer than this is rejected
+# before it ever reaches PAM.
+max_secret_len = 1024
+max_username_len = 256
+
+allow_password = true
+allow_pin = false
+
+# root may only authenticate on a physical console seat (ttyN), never
+# through a remote/virtual one.
+restrict_root_to_console = true

@@ -1,0 +1,13 @@
+# What runs after a successful login. mitos-login discovers *.session files
+# under sessions_dir (see login.toml) the same way X/Wayland display
+# managers discover *.desktop session files -- it does not hard-code any
+# particular desktop's binary name.
+
+# Session launched when someone authenticates as root: a plain shell, never
+# the graphical desktop stack, since root is an administrative account, not
+# a desktop user. Leave unset to fall back to the account's own login shell.
+# root_session = "/bin/bash"
+
+# Override where *.session files are read from (rarely needed; normally set
+# once in login.toml).
+# sessions_dir = "/usr/share/mitos-sessions"

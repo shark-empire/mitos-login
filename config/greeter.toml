@@ -1,0 +1,15 @@
+# Greeter appearance and accessibility. All of this can also be changed from
+# the greeter's own accessibility menu at the login screen; that UI writes
+# back to this file.
+
+# An absolute path to a background image is not required — the default
+# "Liquid Glass" animated backdrop needs no image file at all. Leave unset
+# to use it.
+# background_path = "/usr/share/mitos-login/backgrounds/default.rgba"
+
+[accessibility]
+high_contrast = false
+large_text = false
+reduced_motion = false
+screen_reader = false
+visible_focus = false

@@ -1,0 +1,29 @@
+# mitos-login daemon settings.
+# Every key here is optional; a missing file uses the built-in default
+# (see src/config/defaults.rs).
+
+# BCP-47 language tag for the greeter. Currently shipped: "en-US", "es-ES".
+language = "en-US"
+
+# The unprivileged system account the greeter UI process runs as. Create it
+# with no login shell and no password (e.g. `useradd --system --no-create-home
+# --shell /usr/sbin/nologin mitos-greeter`); the daemon never runs anything as
+# this account other than the greeter itself.
+greeter_user = "mitos-greeter"
+
+# Absolute path to libpam.so.0. Leave empty to search the standard system
+# library directories automatically (recommended).
+pam_library = ""
+
+# Where *.session files are discovered (root-owned, non-writable files only).
+sessions_dir = "/usr/share/mitos-sessions"
+
+# Persistent daemon state: the lockout counters, their signing key, and the
+# audit log.
+state_dir = "/var/lib/mitos-login"
+
+# The admin control socket mitos-loginctl connects to.
+control_socket_path = "/run/mitos-login/control.sock"
+
+# Base directory under which each user's XDG_RUNTIME_DIR/<uid> is created.
+runtime_dir_base = "/run/user"

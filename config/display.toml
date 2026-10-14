@@ -1,0 +1,12 @@
+# The framebuffer and input devices the greeter draws to and reads from.
+# The defaults are correct on virtually every Linux system: the kernel's own
+# fbdev-emulation layer (on by default) already mode-sets /dev/fb0 to the
+# boot resolution before this daemon ever runs.
+
+framebuffer_device = "/dev/fb0"
+input_device_dir = "/dev/input"
+
+# Pin the greeter to a specific virtual terminal number. Leave unset to let
+# the kernel pick a free one (VT_OPENQRY) -- the right choice on almost every
+# system.
+# greeter_vt = 1

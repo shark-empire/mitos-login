@@ -1,0 +1,39 @@
+# mitos-login daemon unit.
+#
+# Written in systemd unit syntax, which mitosOS's own process supervisor
+# (mitos-services) deliberately mirrors for its services.d/*.service files
+# (see that project's docs) -- this file works unmodified under either
+# supervisor. Type=notify expects an sd_notify-compatible READY=1 once the
+# seat is acquired and the first greeter is on screen; mitos-services'
+# notify.rs documents itself as sd_notify-compatible for exactly this reason.
+#
+# Install: copy to /etc/systemd/system/ (or mitos-services' services.d/),
+# then `systemctl enable --now mitos-login` (or the mitosctl equivalent).
+
+[Unit]
+Description=MITOS Login Manager
+Documentation=file:///usr/share/doc/mitos-login/architecture.md
+# Needs a seat (VT + input devices) and a writable /var and /run.
+After=systemd-udev-settle.service local-fs.target
+Conflicts=getty@tty1.service
+Before=getty@tty1.service
+
+[Service]
+Type=notify
+ExecStart=/usr/bin/mitos-login daemon
+Restart=always
+RestartSec=2
+# The daemon drops no privileges itself -- it remains root for its whole
+# lifetime (see docs/security.md) so it can keep authenticating further
+# logins and launching further sessions; CAPABILITY/seccomp sandboxing here
+# would have to carve out everything the greeter/session spawn path needs
+# (setuid/setgid/chroot-adjacent operations, VT and device ioctls, reboot(2))
+# and is tracked as a documented gap, not attempted as a partial measure
+# that would be more confusing than no sandboxing at all.
+KillMode=mixed
+KillSignal=SIGTERM
+TimeoutStopSec=10
+OOMScoreAdjust=-900
+
+[Install]
+WantedBy=graphical.target

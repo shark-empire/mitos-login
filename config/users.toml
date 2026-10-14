@@ -1,0 +1,14 @@
+# Which accounts appear on the login screen. This does not restrict who can
+# *authenticate* (see security.toml for that) -- only who is shown by
+# default, matching every mainstream login manager's distinction between
+# "listed" and "can type it and sign in".
+
+[list]
+min_uid = 1000
+max_uid = 60000
+denied_shells = ["/usr/sbin/nologin", "/sbin/nologin", "/bin/false", "/usr/bin/false"]
+always_hide = ["mitos-greeter"]
+
+# If non-empty, ONLY these usernames are ever shown (for a shared/kiosk
+# machine). Leave empty to show everyone the rules above allow.
+allow_only = []
