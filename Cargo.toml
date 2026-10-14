@@ -1,0 +1,32 @@
+[package]
+name = "mitos-login"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.74"
+description = "MITOS login manager: privilege-separated daemon, Liquid Glass greeter, hardened session launcher"
+license = "MIT"
+readme = "README.md"
+publish = false
+
+[lib]
+name = "mitos_login"
+path = "src/lib.rs"
+
+[[bin]]
+name = "mitos-login"
+path = "src/main.rs"
+
+[[bin]]
+name = "mitos-loginctl"
+path = "bin/mitos-loginctl.rs"
+
+# Zero third-party dependencies on purpose: this crate runs as root next to
+# the login screen, so every dependency would be part of the trusted base.
+[dependencies]
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+overflow-checks = true
