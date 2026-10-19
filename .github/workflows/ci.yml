@@ -1,0 +1,184 @@
+name: CI
+
+# mitos-login has zero third-party dependencies and was written without a Rust
+# toolchain on hand, so this pipeline is also the first real compiler it meets:
+# every job is independent (no `needs:`), so one red job never hides the
+# results of another.
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      debug_enabled:
+        description: "Open a detached tmate SSH session on the test runner (the tests keep running)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  RUST_BACKTRACE: 1
+
+jobs:
+  # ------------------------------------------------------------------ compile
+  check:
+    name: check (stable) + zero-dependency guard
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: cargo check
+        run: cargo check --all-targets --locked
+      - name: No third-party dependencies
+        # CONTRIBUTING.md: this crate runs as root next to the login screen,
+        # so every dependency would join the trusted base. Fail loudly if one
+        # sneaks in.
+        run: |
+          cargo tree --prefix none --edges all --locked
+          lines=$(cargo tree --prefix none --edges all --locked | wc -l)
+          if [ "$lines" -ne 1 ]; then
+            echo "::error::mitos-login must have zero third-party dependencies (found $((lines - 1)))"
+            exit 1
+          fi
+
+  msrv:
+    name: check (MSRV 1.74)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.74.0
+      - run: cargo check --all-targets --locked
+
+  # --------------------------------------------------------------------- test
+  test:
+    name: test (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-24.04
+          # Remove this entry if the repository is private: GitHub-hosted
+          # arm64 runners are only free for public repositories.
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Debug session (optional)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
+        uses: mxschmitt/action-tmate@v3
+        with:
+          detached: true
+          limit-access-to-actor: true
+
+      # Debug profile on purpose: overflow checks and debug assertions are on,
+      # so an arithmetic slip in a parser or the rasterizer panics here
+      # instead of wrapping silently.
+      - name: cargo test
+        run: cargo test --all-targets --locked
+      - name: cargo test --doc
+        run: cargo test --doc --locked
+
+      - name: Release build (LTO, overflow-checks)
+        run: cargo build --release --locked
+      - name: Binary sizes
+        run: ls -l target/release/mitos-login target/release/mitos-loginctl
+
+      - name: The shipped config files parse with the real parser
+        run: ./target/release/mitos-login check-config --config config
+
+      - name: Render the real greeter headlessly and convert to PNG
+        run: |
+          mkdir -p preview
+          for scene in login error locked-out power-menu; do
+            ./target/release/mitos-login preview "preview/$scene.ppm" 1280x720 "$scene"
+            python3 scripts/ppm2png.py "preview/$scene.ppm" "preview/$scene.png"
+          done
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mitos-login-${{ matrix.arch }}
+          path: |
+            target/release/mitos-login
+            target/release/mitos-loginctl
+            preview/*.png
+          if-no-files-found: error
+
+  test-root:
+    # Re-runs everything as root, which exercises code the unprivileged job
+    # can only skip: the real privilege drop in `sys::spawn`, SO_PEERCRED's
+    # allow path on the control socket, and the root-ownership trust checks.
+    name: test as root
+    runs-on: ubuntu-24.04
+    container: rust:1-bookworm
+    steps:
+      - uses: actions/checkout@v4
+      - run: cargo test --all-targets --locked
+
+  # -------------------------------------------------------------------- audit
+  ffi:
+    # src/sys/ffi.rs hard-codes ioctl numbers, struct layouts, signal numbers
+    # and flag values. This compiles a C probe against THIS runner's real
+    # kernel/glibc headers and fails on any mismatch -- on both architectures,
+    # since several of these values differ between x86_64 and aarch64.
+    name: FFI constants vs system headers (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-24.04
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+      - run: sh scripts/check-ffi.sh
+
+  clippy:
+    name: clippy (-D warnings)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - run: cargo clippy --all-targets --locked -- -D warnings
+
+  fmt:
+    # Non-blocking until the tree has been through `cargo fmt` once; then
+    # delete `continue-on-error`.
+    name: rustfmt (non-blocking)
+    runs-on: ubuntu-24.04
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - run: cargo fmt --all -- --check
+
+  doc:
+    # Non-blocking until the intra-doc links have been checked against a real
+    # rustdoc once; then delete `continue-on-error`.
+    name: rustdoc (non-blocking)
+    runs-on: ubuntu-24.04
+    continue-on-error: true
+    env:
+      RUSTDOCFLAGS: -D warnings
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo doc --no-deps --locked
