@@ -1,0 +1,313 @@
+/*
+  Tinted liquid glass + the live layer.
+  Loaded after the component and page styles so the glass recipe wins ties.
+*/
+
+:root {
+  --sheen: rgba(255, 255, 255, 0.09);
+}
+:root[data-theme='light'] {
+  --sheen: rgba(255, 255, 255, 0.55);
+}
+
+/* ================= Backdrop ================= */
+.aurora {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 80% at 50% -10%, var(--bg-2), transparent 70%),
+    var(--bg);
+}
+.aurora::after {
+  /* Fine grain, so the glass has something to refract and the gradients never band. */
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.09;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+.aurora__orb {
+  position: absolute;
+  border-radius: 50%;
+  /* Parallax from the pointer (--px/--py) plus the spring set by clicks (--kx/--ky). */
+  transform: translate3d(
+    calc(var(--px, 0) * var(--d) * 56px + var(--kx, 0) * var(--d) * 1px),
+    calc(var(--py, 0) * var(--d) * 40px + var(--ky, 0) * var(--d) * 1px),
+    0
+  );
+  will-change: transform;
+}
+.aurora__orb i {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%, var(--c) 0%, transparent 68%);
+  mix-blend-mode: var(--aurora-mix);
+  animation: drift var(--t) ease-in-out infinite alternate;
+}
+.aurora__orb--a { --c: var(--orb-a); --t: 38s; width: 70vmax; height: 70vmax; left: -22vmax; top: -34vmax; }
+.aurora__orb--b { --c: var(--orb-b); --t: 46s; width: 60vmax; height: 60vmax; right: -18vmax; top: -22vmax; }
+.aurora__orb--c { --c: var(--orb-c); --t: 52s; width: 56vmax; height: 56vmax; left: -20vmax; bottom: -26vmax; }
+.aurora__orb--d { --c: var(--orb-d); --t: 44s; width: 50vmax; height: 50vmax; right: -14vmax; bottom: -22vmax; }
+@keyframes drift {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(4vmax, 3vmax, 0) scale(1.12); }
+}
+.aurora__cursor {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 640px;
+  height: 640px;
+  margin: -320px 0 0 -320px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--tint) 28%, transparent), transparent 66%);
+  mix-blend-mode: var(--aurora-mix);
+  transform: translate3d(var(--cx, 50vw), var(--cy, 30vh), 0);
+  opacity: var(--cop, 0);
+  transition: opacity 0.6s;
+}
+
+/* ================= Glass ================= */
+.header,
+.footer,
+.tabbar,
+.panel,
+.ticket,
+.offer,
+.account__who,
+.stat,
+.walletcard,
+.order,
+.contactcard,
+.endpoint,
+.codecard,
+.cta__inner,
+.how__item,
+.feature,
+.statband,
+.storehead,
+.toast {
+  isolation: isolate;
+  background:
+    linear-gradient(180deg, var(--sheen), transparent 42%),
+    linear-gradient(150deg, color-mix(in srgb, var(--tint) var(--g-mix), var(--g-base)), color-mix(in srgb, var(--tint) var(--g-mix-2), var(--g-base-2)) 72%);
+  border: 1px solid var(--line);
+  box-shadow:
+    inset 1px 1px 0 var(--glass-edge),
+    inset -1px -1px 0 var(--glass-edge-dim),
+    inset 0 0 44px -10px color-mix(in srgb, var(--tint) 24%, transparent),
+    var(--glass-shadow);
+  -webkit-backdrop-filter: blur(24px) saturate(1.8) brightness(1.05);
+  backdrop-filter: blur(24px) saturate(1.8) brightness(1.05);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .header, .footer, .tabbar, .panel, .ticket, .offer, .account__who, .stat, .walletcard, .order, .contactcard, .endpoint,
+  .codecard, .cta__inner, .how__item, .feature, .statband, .storehead, .toast {
+    background-color: color-mix(in srgb, var(--bg) 84%, var(--tint));
+  }
+}
+.panel,
+.ticket,
+.offer,
+.account__who,
+.stat,
+.walletcard,
+.order,
+.contactcard,
+.endpoint,
+.codecard,
+.cta__inner,
+.how__item,
+.feature,
+.statband,
+.storehead,
+.footer,
+.toast {
+  position: relative;
+}
+.toast {
+  position: relative;
+}
+
+/* Dark glass for the places that were dark blocks before (balance card, code sample): readable in both themes. */
+.walletcard,
+.stat--primary,
+.codecard {
+  --g-mix: 30%;
+  --g-base: rgba(3, 12, 11, 0.74);
+  --g-mix-2: 12%;
+  --g-base-2: rgba(3, 12, 11, 0.8);
+  --sheen: rgba(255, 255, 255, 0.1);
+  --glass-edge: rgba(255, 255, 255, 0.32);
+  --glass-edge-dim: rgba(255, 255, 255, 0.07);
+  color: var(--inverse-ink);
+}
+
+/* Smaller tiles sit on the page directly: a light fill and a lit edge, no extra blur. */
+.nettile,
+.bundle,
+.product,
+.mbundle,
+.storecard,
+.quick__item,
+.recent__chip,
+.stepper {
+  background: color-mix(in srgb, var(--tint) 5%, var(--surface));
+  border-color: var(--line);
+  box-shadow: inset 1px 1px 0 var(--glass-edge-dim);
+}
+.nettile:hover,
+.bundle:hover:not(:disabled),
+.product:hover,
+.mbundle:hover,
+.storecard:hover,
+.quick__item:hover {
+  background: color-mix(in srgb, var(--tint) 9%, var(--surface-2));
+  border-color: var(--line-strong);
+}
+.nettile.is-on,
+.bundle.is-on,
+.product.is-on,
+.quick__item.is-on,
+.swatch.is-on {
+  background: var(--brand-soft);
+  border-color: color-mix(in srgb, var(--tint) 75%, white);
+  box-shadow:
+    inset 1px 1px 0 var(--glass-edge),
+    0 14px 40px -16px color-mix(in srgb, var(--tint) 70%, transparent);
+}
+
+.callout {
+  -webkit-backdrop-filter: blur(14px) saturate(1.5);
+  backdrop-filter: blur(14px) saturate(1.5);
+}
+
+/* ================= Live: highlight, tilt, ripples, click effects ================= */
+.fx-lit {
+  isolation: isolate;
+}
+.fx-lit:not(.header):not(.tabbar):not(.toast) {
+  position: relative;
+}
+.fx-lit::after {
+  /* The specular highlight: sits above the glass and below the content (negative z-index inside the isolated parent). */
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(340px circle at var(--lx, 50%) var(--ly, 0%), var(--specular), transparent 62%);
+  opacity: 0;
+  transition: opacity 0.45s;
+}
+.fx-lit.is-lit::after {
+  opacity: 1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ratecard,
+  .offer,
+  .nettile,
+  .bundle,
+  .product,
+  .mbundle,
+  .storecard,
+  .stat,
+  .walletcard,
+  .how__item,
+  .feature,
+  .contactcard,
+  .order {
+    transform: perspective(1000px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+    transition: transform 0.7s var(--ease-out), background-color 0.2s, border-color 0.2s, box-shadow 0.3s;
+  }
+  .is-tilting {
+    transition: transform 0.14s linear, background-color 0.2s, border-color 0.2s, box-shadow 0.3s !important;
+  }
+  .btn[data-magnetic] {
+    transition: translate 0.45s var(--ease-out), background-color 0.2s, box-shadow 0.3s, transform 0.2s var(--ease-out);
+  }
+}
+
+.fx-rel {
+  position: relative;
+}
+.fx-rhost {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+}
+.fx-ripple {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--tint) 70%, white) 0%, color-mix(in srgb, var(--tint) 30%, transparent) 45%, transparent 70%);
+  opacity: 0.6;
+  transform: scale(0);
+  animation: ripple 0.8s var(--ease-out) forwards;
+}
+@keyframes ripple {
+  to {
+    transform: scale(var(--s, 20));
+    opacity: 0;
+  }
+}
+
+.fx-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  overflow: hidden;
+  pointer-events: none;
+}
+.fx-ring {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  margin: -150px 0 0 -150px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    transparent 52%,
+    color-mix(in srgb, var(--tint) 70%, white) 57%,
+    color-mix(in srgb, var(--tint) 35%, transparent) 62%,
+    transparent 68%
+  );
+  transform: scale(0.05);
+  animation: ring 0.8s var(--ease-out) forwards;
+}
+@keyframes ring {
+  to {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+.fx-dot {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--tint) 70%, white);
+  box-shadow: 0 0 10px var(--tint);
+  animation: dot 0.65s var(--ease-out) forwards;
+}
+@keyframes dot {
+  to {
+    transform: translate(var(--dx), var(--dy)) scale(0.2);
+    opacity: 0;
+  }
+}
